@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import { MOCK_TESTERS } from '../constants';
 import { matchTestersWithAI, generateTestBrief } from '../services/geminiService';
 import { AIMatchResult, TestCampaign } from '../types';
-import { Sparkles, Search, CheckCircle, Loader2, Wand2 } from 'lucide-react';
+import { Sparkles, Search, CheckCircle, Loader2, Wand2, Users, DollarSign } from 'lucide-react';
 
 interface CreateTestProps {
   onSave: (campaign: TestCampaign) => void;
@@ -15,7 +16,8 @@ export const CreateTest: React.FC<CreateTestProps> = ({ onSave }) => {
     title: '',
     description: '',
     targetAudience: '',
-    reward: 20
+    reward: 20,
+    maxTesters: 5
   });
   const [isMatching, setIsMatching] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -54,10 +56,13 @@ export const CreateTest: React.FC<CreateTestProps> = ({ onSave }) => {
       status: 'ACTIVE',
       createdAt: new Date().toISOString(),
       feedbacks: [],
-      reward: formData.reward
+      reward: formData.reward,
+      maxTesters: formData.maxTesters
     };
     onSave(newCampaign);
   };
+
+  const totalBudget = formData.reward * formData.maxTesters;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -114,14 +119,48 @@ export const CreateTest: React.FC<CreateTestProps> = ({ onSave }) => {
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Récompense par testeur ($)</label>
-              <input 
-                type="number" 
-                className="w-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                value={formData.reward}
-                onChange={(e) => setFormData({...formData, reward: Number(e.target.value)})}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Récompense par testeur ($)</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500">$</span>
+                  </div>
+                  <input 
+                    type="number" 
+                    min="1"
+                    className="w-full pl-8 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    value={formData.reward}
+                    onChange={(e) => setFormData({...formData, reward: Number(e.target.value)})}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de testeurs max</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Users size={16} className="text-gray-500" />
+                  </div>
+                  <input 
+                    type="number" 
+                    min="1"
+                    className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    value={formData.maxTesters}
+                    onChange={(e) => setFormData({...formData, maxTesters: Number(e.target.value)})}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-indigo-50 p-4 rounded-lg flex items-center justify-between border border-indigo-100">
+                <div className="flex items-center gap-2 text-indigo-900">
+                    <DollarSign size={20} />
+                    <span className="font-medium">Budget total estimé</span>
+                </div>
+                <div className="text-2xl font-bold text-indigo-700">
+                    ${totalBudget}
+                </div>
             </div>
 
             <button 
@@ -143,6 +182,10 @@ export const CreateTest: React.FC<CreateTestProps> = ({ onSave }) => {
               <CardTitle>Testeurs suggérés</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+                Vous recherchez <strong>{formData.maxTesters} testeurs</strong>. L'IA a analysé la base de données et suggère les profils suivants :
+              </div>
+
               <div className="space-y-4">
                 {matches.map((match, idx) => {
                    const tester = MOCK_TESTERS.find(t => t.id === match.testerId);
@@ -170,7 +213,7 @@ export const CreateTest: React.FC<CreateTestProps> = ({ onSave }) => {
               <div className="mt-6 flex gap-3">
                 <button onClick={() => setStep(1)} className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">Retour</button>
                 <button onClick={handleCreate} className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-indigo-700">
-                    Lancer la campagne
+                    Lancer la campagne (${totalBudget})
                 </button>
               </div>
             </CardContent>
